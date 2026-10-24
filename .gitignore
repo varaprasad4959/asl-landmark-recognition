@@ -1,0 +1,22 @@
+
+# Python environment and cache
+.venv/
+__pycache__/
+*.py[cod]
+
+# IDE and operating system files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Temporary files and logs
+*.log
+
+# Original image dataset (keep locally)
+signlanguagedataset/
+
+# Experimental image models (keep locally)
+models/asl_alphabet_resnet18.pth
+models/sign_language_resnet18.pth
+# Local extracted landmark dataset
+models/asl_landmarks_dataset.npz
