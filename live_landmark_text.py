@@ -26,6 +26,12 @@ MIRROR_WEBCAM = True
 CONFIDENCE_THRESHOLD = 0.60
 SMOOTHING_FRAMES = 10
 
+# UI colors (OpenCV uses BGR)
+PANEL_COLOR = (30, 30, 30)
+GREEN = (0, 255, 0)
+WHITE = (255, 255, 255)
+CYAN = (255, 255, 0)
+
 # ==================================================
 # 2. LOAD MODEL AND SCALER
 # ==================================================
@@ -74,6 +80,7 @@ model = LandmarkMLP(
     checkpoint["input_size"],
     checkpoint["num_classes"]
 )
+
 model.load_state_dict(checkpoint["model_state_dict"])
 model.to(device)
 model.eval()
@@ -133,8 +140,15 @@ current_confidence = 0.0
 stable_letter = ""
 stable_count = 0
 
-# Require a stable prediction before C can insert it.
 STABLE_FRAMES_REQUIRED = 5
+
+HELP_TEXT = [
+    "C: Add predicted letter",
+    "SPACE: Add space",
+    "BACKSPACE: Delete last character",
+    "X: Clear text",
+    "Q: Quit"
+]
 
 # ==================================================
 # 6. START WEBCAM
@@ -150,18 +164,11 @@ if not camera.isOpened():
 last_timestamp_ms = 0
 previous_time = time.time()
 
-HELP_TEXT = [
-    "C: Add predicted letter",
-    "SPACE: Add space",
-    "BACKSPACE: Delete last character",
-    "X: Clear text",
-    "Q: Quit"
-]
-
 try:
     with HandLandmarker.create_from_options(options) as landmarker:
         while True:
             success, frame = camera.read()
+
             if not success:
                 print("Unable to read webcam.")
                 break
@@ -170,6 +177,7 @@ try:
                 frame = cv2.flip(frame, 1)
 
             height, width = frame.shape[:2]
+
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             mp_image = mp.Image(
                 image_format=mp.ImageFormat.SRGB,
@@ -189,13 +197,18 @@ try:
             if result.hand_landmarks:
                 hand = result.hand_landmarks[0]
 
-                # Draw landmarks
+                # Draw detected hand landmarks
                 for point in hand:
                     px = int(point.x * width)
                     py = int(point.y * height)
+
                     if 0 <= px < width and 0 <= py < height:
                         cv2.circle(
-                            frame, (px, py), 4, (0, 255, 0), -1
+                            frame,
+                            (px, py),
+                            4,
+                            GREEN,
+                            -1
                         )
 
                 features = extract_features(hand)
@@ -219,6 +232,7 @@ try:
                         average_probabilities = np.mean(
                             probability_history, axis=0
                         )
+
                         index = int(np.argmax(average_probabilities))
                         current_confidence = float(
                             average_probabilities[index]
@@ -229,7 +243,7 @@ try:
                         else:
                             current_prediction = "Uncertain"
 
-                        # Track how long the predicted letter remains stable.
+                        # Track prediction stability
                         if current_prediction == stable_letter:
                             stable_count += 1
                         else:
@@ -247,67 +261,69 @@ try:
                 stable_count = 0
 
             # ==================================================
-            # 7. DRAW UI
+            # 7. DRAW COMPACT UI
             # ==================================================
 
-            panel_height = 205
+            # Compact top information panel
+            panel_height = 155
+
             cv2.rectangle(
-                frame, (0, 0), (width, panel_height),
-                (30, 30, 30), -1
+                frame,
+                (0, 0),
+                (width, panel_height),
+                PANEL_COLOR,
+                -1
             )
 
+            # Prediction
             cv2.putText(
                 frame,
                 f"Prediction: {current_prediction}",
                 (15, 35),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.8,
-                (0, 255, 0),
-                2
+                GREEN,
+                2,
+                cv2.LINE_AA
             )
 
+            # Confidence
             cv2.putText(
                 frame,
                 f"Confidence: {current_confidence:.2f}",
                 (15, 65),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
-                (255, 255, 255),
-                2
+                WHITE,
+                2,
+                cv2.LINE_AA
             )
 
+            # Composed text
             cv2.putText(
                 frame,
                 f"Text: {typed_text[-45:]}",
                 (15, 105),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.7,
-                (255, 255, 0),
-                2
+                CYAN,
+                2,
+                cv2.LINE_AA
             )
 
+            # Stable frames
             cv2.putText(
                 frame,
                 f"Stable frames: {stable_count}",
                 (15, 135),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.55,
-                (255, 255, 255),
-                1
+                WHITE,
+                1,
+                cv2.LINE_AA
             )
 
-            for i, help_line in enumerate(HELP_TEXT):
-                cv2.putText(
-                    frame,
-                    help_line,
-                    (15 + (i % 3) * (width // 3),
-                     height - 45 + (i // 3) * 20),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.42,
-                    (255, 255, 255),
-                    1
-                )
-
+            # FPS
             now = time.time()
             fps = 1.0 / max(now - previous_time, 1e-6)
             previous_time = now
@@ -315,17 +331,52 @@ try:
             cv2.putText(
                 frame,
                 f"FPS: {fps:.1f}",
-                (width - 130, 35),
+                (width - 145, 35),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.55,
-                (255, 255, 255),
-                1
+                0.6,
+                WHITE,
+                2,
+                cv2.LINE_AA
             )
+
+            # ==================================================
+            # 8. HIGH-VISIBILITY KEYBOARD INSTRUCTIONS
+            # ==================================================
+
+            help_panel_height = 65
+
+            cv2.rectangle(
+                frame,
+                (0, height - help_panel_height),
+                (width, height),
+                PANEL_COLOR,
+                -1
+            )
+
+            help_positions = [
+                (15, height - 40),
+                (width // 3, height - 40),
+                (2 * width // 3, height - 40),
+                (15, height - 12),
+                (width // 3, height - 12)
+            ]
+
+            for help_line, position in zip(HELP_TEXT, help_positions):
+                cv2.putText(
+                    frame,
+                    help_line,
+                    position,
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.48,
+                    GREEN,
+                    1,
+                    cv2.LINE_AA
+                )
 
             cv2.imshow("ASL Landmark Text Composer", frame)
 
             # ==================================================
-            # 8. KEYBOARD CONTROLS
+            # 9. KEYBOARD CONTROLS
             # ==================================================
 
             key = cv2.waitKey(1) & 0xFF
