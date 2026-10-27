@@ -25,6 +25,7 @@ HAND_MODEL_PATH = BASE_DIR / "hand_landmarker.task"
 
 MIRROR_WEBCAM = True
 
+NO_HAND_SPACE_TIMEOUT = 2 # seconds
 CONFIDENCE_THRESHOLD = 0.70
 SMOOTHING_FRAMES = 10
 STABLE_FRAMES_REQUIRED = 15
@@ -161,6 +162,8 @@ def extract_features(hand_landmarks):
 # ==================================================
 
 typed_text = ""
+word_started = False
+no_hand_start_time = None
 
 probability_history = deque(
     maxlen=SMOOTHING_FRAMES
@@ -241,7 +244,29 @@ try:
                 mp_image,
                 timestamp_ms
             )
+            # ==========================================
+            # AUTOMATIC SPACE AFTER HAND DISAPPEARS
+            # ==========================================
 
+            if result.hand_landmarks:
+                no_hand_start_time = None
+
+            else:
+                if word_started:
+                    if no_hand_start_time is None:
+                        no_hand_start_time = time.time()
+
+                    elif (
+                    time.time() - no_hand_start_time
+                    >= NO_HAND_SPACE_TIMEOUT
+                    ):
+                        if typed_text and not typed_text.endswith(" "):
+                            typed_text += " "
+                            print("Automatic space inserted.")
+                            print("Text:", typed_text)
+
+                        word_started = False
+                        no_hand_start_time = None
             # ==========================================
             # HAND DETECTION AND MODEL PREDICTION
             # ==========================================
@@ -366,6 +391,7 @@ try:
                     ):
 
                         typed_text += current_prediction
+                        word_started = True
 
                         last_captured_letter = current_prediction
                         last_capture_time = time.time()
