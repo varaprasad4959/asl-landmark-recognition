@@ -186,9 +186,13 @@ HELP_TEXT = [
     "SPACE: Add space",
     "BACKSPACE: Delete character",
     "X: Clear text",
-    "Q: Quit"
+    "V: Speak text | Q: Quit"
 ]
-
+# ==================================================
+# VOICE OUTPUT
+# Speech is launched in a separate Python process for each V press.
+# This avoids reusing a pyttsx3 engine that may stop speaking.
+# ==================================================
 
 # ==================================================
 # 6. START WEBCAM
@@ -576,6 +580,46 @@ try:
 
                 typed_text = typed_text[:-1]
                 print("Text:", typed_text)
+
+            elif key in (ord("v"), ord("V")):
+                text_to_speak = typed_text.strip()
+
+                if text_to_speak:
+                    try:
+                        import subprocess
+                        import sys
+
+                        speech_code = (
+                            "import sys, pyttsx3; "
+                            "engine = pyttsx3.init(); "
+                            "engine.setProperty('rate', 145); "
+                            "engine.setProperty('volume', 1.0); "
+                            "engine.say(sys.argv[1]); "
+                            "engine.runAndWait(); "
+                            "engine.stop()"
+                        )
+
+                        print("Starting voice playback:", text_to_speak)
+
+                        result = subprocess.run(
+                            [sys.executable, "-c", speech_code, text_to_speak],
+                            capture_output=True,
+                            text=True,
+                            timeout=60
+                        )
+
+                        if result.returncode == 0:
+                            print("VOICE PLAYBACK COMPLETED")
+                        else:
+                            print("VOICE ERROR:", result.stderr.strip())
+
+                    except subprocess.TimeoutExpired:
+                        print("VOICE ERROR: Speech timed out after 60 seconds.")
+                    except Exception as error:
+                        print("VOICE ERROR:", repr(error))
+                else:
+                    print("No text to speak.")
+
 
             elif key == ord("x"):  # CLEAR TEXT
 
