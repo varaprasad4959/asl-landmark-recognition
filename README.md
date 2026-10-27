@@ -60,13 +60,6 @@ The trained classifier supports 29 classes:
 
 The application uses its text-composition logic to determine how predictions are handled. The current project focuses on alphabet-level recognition and does not perform full ASL sentence translation.
 
-## 🎬 Demo
-
-Watch the application demonstrate live hand tracking, gesture prediction, automatic letter capture, text composition, and voice output.
-
-**[▶ Watch the ASL Landmark Recognition Demo](PASTE_YOUR_HOSTED_VIDEO_URL_HERE)**
-
-> Replace the placeholder with your actual video URL. The local file `demo/asl-demo.mp4` is not publicly accessible unless you commit it to the repository or host it elsewhere.
 
 ## 🚀 Getting Started
 
