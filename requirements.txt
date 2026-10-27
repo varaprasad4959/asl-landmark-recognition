@@ -1,0 +1,7 @@
+
+numpy
+opencv-python
+mediapipe
+torch
+PySide6
+pyttsx3
