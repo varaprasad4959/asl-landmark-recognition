@@ -22,7 +22,7 @@ The project is designed as a lightweight, landmark-based approach to real-time h
 
 The desktop application includes a live camera panel, gesture prediction and confidence information, and a text composition area.
 
-![alt text](<Screenshot 2026-10-28 011535.png>)
+![ASL Landmark Recognition desktop application](assets/app-preview.png)
 
 ## 🎬 Working Demo
 
