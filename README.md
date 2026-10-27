@@ -24,12 +24,6 @@ The desktop application includes a live camera panel, gesture prediction and con
 
 ![ASL Landmark Recognition desktop application](assets/app-preview.png)
 
-## 🎬 Working Demo
-
-Watch the application perform real-time hand tracking, automatic letter capture, text composition, and text-to-speech output.
-
-<video controls src="asl-demo.mp4" title="Title"></video>
-
 ## 🛠️ Technology Stack
 
 | Technology | Purpose |
