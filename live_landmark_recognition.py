@@ -20,7 +20,7 @@ CLASSES_PATH = BASE_DIR / "models" / "asl_landmark_mlp_classes.json"
 HAND_MODEL_PATH = BASE_DIR / "hand_landmarker.task"
 
 MIRROR_WEBCAM = True
-CONFIDENCE_THRESHOLD = 0.60
+CONFIDENCE_THRESHOLD = 0.70
 SMOOTHING_FRAMES = 10
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
